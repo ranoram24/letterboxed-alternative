@@ -17,8 +17,11 @@ from app.schemas.list import (
     MovieListOut,
     MovieListUpdate,
 )
+from app.schemas.movie import MovieOut
 from app.schemas.watchlist import WatchlistItemCreate, WatchlistItemOut
+from app.schemas.what_to_choose import WhatToChooseRequest, WhatToChooseResponse
 from app.services.tmdb_client import get_or_cache_movie
+from app.services.what_to_choose import choose_movie
 
 router = APIRouter(prefix="/api/library", tags=["library"])
 
@@ -152,6 +155,21 @@ def remove_from_watchlist(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not on watchlist")
     db.delete(item)
     db.commit()
+
+
+@router.post("/watchlist/what-to-choose", response_model=WhatToChooseResponse)
+def what_to_choose(
+    payload: WhatToChooseRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """One Claude call, one pick — picks a single movie from the caller's watchlist."""
+    try:
+        movie, reason = choose_movie(db, current_user, payload)
+    except ValueError as error:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error)) from error
+
+    return WhatToChooseResponse(movie=MovieOut.model_validate(movie), reason=reason)
 
 
 # ---------------------------------------------------------------------------

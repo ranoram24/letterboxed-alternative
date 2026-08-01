@@ -13,6 +13,7 @@ export interface Movie {
   backdrop_url: string | null;
   vote_average: number | null;
   vote_count: number | null;
+  popularity: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -68,6 +69,11 @@ export interface ListMovieItem {
 
 export interface MovieListDetail extends MovieList {
   items: ListMovieItem[];
+}
+
+export interface WhatToChooseResult {
+  movie: Movie;
+  reason: string;
 }
 
 export interface CurrentUser {

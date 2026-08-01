@@ -6,6 +6,7 @@ pydantic-settings
 authlib
 httpx
 itsdangerous
+anthropic
 
 # dev / test
 pytest

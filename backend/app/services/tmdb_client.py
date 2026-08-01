@@ -116,6 +116,7 @@ def _normalize_detail(data: dict) -> dict:
         "backdrop_url": _backdrop_url(data.get("backdrop_path")),
         "vote_average": data.get("vote_average"),
         "vote_count": data.get("vote_count"),
+        "popularity": data.get("popularity"),
     }
 
 

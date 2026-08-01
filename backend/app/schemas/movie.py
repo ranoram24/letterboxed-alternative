@@ -29,6 +29,7 @@ class MovieOut(BaseModel):
     backdrop_url: str | None
     vote_average: float | None
     vote_count: int | None
+    popularity: float | None
     created_at: datetime
     updated_at: datetime
 

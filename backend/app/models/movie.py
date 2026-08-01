@@ -24,6 +24,7 @@ class Movie(Base):
     backdrop_url: Mapped[str | None] = mapped_column(String, nullable=True)
     vote_average: Mapped[float | None] = mapped_column(Float, nullable=True)  # TMDb 0-10 scale
     vote_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    popularity: Mapped[float | None] = mapped_column(Float, nullable=True)  # TMDb popularity score
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now(), onupdate=func.now()

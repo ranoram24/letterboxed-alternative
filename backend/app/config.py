@@ -17,6 +17,8 @@ class Settings(BaseSettings):
     tmdb_api_key: str = ""
     tmdb_api_base_url: str = "https://api.themoviedb.org/3"
 
+    anthropic_api_key: str = ""
+
     frontend_url: str = "http://localhost:3000"
 
 

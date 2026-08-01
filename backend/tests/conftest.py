@@ -94,6 +94,21 @@ def mock_tmdb(monkeypatch):
 
 
 @pytest.fixture()
+def claude_responses(monkeypatch):
+    """Queue of MovieChoiceLLM|None to return from successive _call_claude calls, so
+    tests don't need a real Anthropic API key or network access."""
+    from app.services import what_to_choose as what_to_choose_module
+
+    responses: list = []
+
+    def fake_call_claude(system_prompt):
+        return responses.pop(0) if responses else None
+
+    monkeypatch.setattr(what_to_choose_module, "_call_claude", fake_call_claude)
+    return responses
+
+
+@pytest.fixture()
 def client(db_session, test_user, mock_tmdb):
     def override_get_db():
         yield db_session

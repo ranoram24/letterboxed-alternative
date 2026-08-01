@@ -6,9 +6,11 @@ import type { WatchlistItem } from "@/lib/types";
 
 export default function WatchlistTile({
   item,
+  highlighted = false,
   onRemoved,
 }: {
   item: WatchlistItem;
+  highlighted?: boolean;
   onRemoved: (movieId: number) => void;
 }) {
   async function handleRemove() {
@@ -20,7 +22,11 @@ export default function WatchlistTile({
     <div className="group relative">
       <Link
         href={`/movie/${item.movie.tmdb_id}`}
-        className="block overflow-hidden rounded-lg shadow-lg transition-transform duration-200 group-hover:scale-105"
+        className={
+          highlighted
+            ? "block overflow-hidden rounded-lg shadow-lg ring-2 ring-amber-400 transition-transform duration-200 group-hover:scale-105"
+            : "block overflow-hidden rounded-lg shadow-lg transition-transform duration-200 group-hover:scale-105"
+        }
       >
         {item.movie.poster_url ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -31,6 +37,11 @@ export default function WatchlistTile({
           </div>
         )}
       </Link>
+      {highlighted && (
+        <span className="absolute top-1.5 left-1.5 rounded-full bg-amber-400 px-1.5 py-0.5 text-[10px] font-semibold text-zinc-900">
+          Tonight&apos;s Pick
+        </span>
+      )}
       <button
         onClick={handleRemove}
         aria-label="Remove from watchlist"
