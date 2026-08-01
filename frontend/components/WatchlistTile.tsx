@@ -39,7 +39,7 @@ export default function WatchlistTile({
       </Link>
       {highlighted && (
         <span className="absolute top-1.5 left-1.5 rounded-full bg-amber-400 px-1.5 py-0.5 text-[10px] font-semibold text-zinc-900">
-          Tonight&apos;s Pick
+          Your Pick
         </span>
       )}
       <button

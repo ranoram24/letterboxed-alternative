@@ -10,11 +10,13 @@ const inputClass =
 
 export default function AddLogModal({
   initialMovie = null,
+  initialQuery = "",
   closeLabel = "Close",
   onClose,
   onLogged,
 }: {
   initialMovie?: MovieSearchResult | null;
+  initialQuery?: string;
   closeLabel?: string;
   onClose: () => void;
   onLogged: (entry: DiaryEntry) => void;
@@ -67,7 +69,7 @@ export default function AddLogModal({
         </div>
 
         {!selected ? (
-          <MovieSearchInput onSelect={setSelected} />
+          <MovieSearchInput onSelect={setSelected} initialQuery={initialQuery} />
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-2.5">

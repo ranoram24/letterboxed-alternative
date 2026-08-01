@@ -7,11 +7,13 @@ import type { MovieSearchResult } from "@/lib/types";
 export default function MovieSearchInput({
   onSelect,
   placeholder = "Search for a movie...",
+  initialQuery = "",
 }: {
   onSelect: (result: MovieSearchResult) => void;
   placeholder?: string;
+  initialQuery?: string;
 }) {
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(initialQuery);
   const [results, setResults] = useState<MovieSearchResult[]>([]);
   const [loading, setLoading] = useState(false);
 

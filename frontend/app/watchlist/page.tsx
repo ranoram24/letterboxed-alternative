@@ -118,7 +118,7 @@ export default function WatchlistPage() {
             )}
           </Link>
           <div className="min-w-0">
-            <p className="text-xs font-semibold tracking-wide text-amber-400 uppercase">Tonight&apos;s Pick</p>
+            <p className="text-xs font-semibold tracking-wide text-amber-400 uppercase">Your Pick</p>
             <Link href={`/movie/${pick.movie.tmdb_id}`} className="font-medium text-white hover:underline">
               {pick.movie.title} {pick.movie.year ? `(${pick.movie.year})` : ""}
             </Link>

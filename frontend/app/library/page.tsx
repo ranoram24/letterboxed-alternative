@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import AddLogModal from "@/components/AddLogModal";
 import DiaryEntryTile from "@/components/DiaryEntryTile";
 import EditDiaryEntryModal from "@/components/EditDiaryEntryModal";
+import ImportLetterboxdModal from "@/components/ImportLetterboxdModal";
 import { apiGet } from "@/lib/api";
 import type { DiaryEntry } from "@/lib/types";
 import { useCurrentUser } from "@/lib/useCurrentUser";
@@ -14,7 +15,12 @@ export default function LibraryPage() {
   const router = useRouter();
   const [entries, setEntries] = useState<DiaryEntry[] | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
   const [editingEntry, setEditingEntry] = useState<DiaryEntry | null>(null);
+
+  function refetchEntries() {
+    apiGet<DiaryEntry[]>("/api/library/diary").then(setEntries);
+  }
 
   useEffect(() => {
     if (loading) return;
@@ -22,7 +28,7 @@ export default function LibraryPage() {
       router.replace("/login");
       return;
     }
-    apiGet<DiaryEntry[]>("/api/library/diary").then(setEntries);
+    refetchEntries();
   }, [user, loading, router]);
 
   if (loading || !user) {
@@ -31,7 +37,15 @@ export default function LibraryPage() {
 
   return (
     <div className="relative mx-auto w-full max-w-5xl flex-1 px-4 py-8 sm:px-6">
-      <h1 className="mb-5 text-2xl font-semibold text-white">Library</h1>
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-2xl font-semibold text-white">Library</h1>
+        <button
+          onClick={() => setShowImportModal(true)}
+          className="rounded-full border border-white/20 px-4 py-1.5 text-sm font-semibold text-white transition-transform hover:scale-105"
+        >
+          Import from Letterboxd
+        </button>
+      </div>
 
       {entries === null ? (
         <p className="text-sm text-zinc-500">Loading...</p>
@@ -63,6 +77,10 @@ export default function LibraryPage() {
             setShowAddModal(false);
           }}
         />
+      )}
+
+      {showImportModal && (
+        <ImportLetterboxdModal onClose={() => setShowImportModal(false)} onImported={refetchEntries} />
       )}
 
       {editingEntry && (

@@ -76,6 +76,34 @@ export interface WhatToChooseResult {
   reason: string;
 }
 
+export interface UnmatchedFilm {
+  title: string;
+  year: number | null;
+}
+
+export interface ImportSummary {
+  diary_entries_imported: number;
+  diary_entries_skipped: number;
+  watchlist_items_imported: number;
+  watchlist_items_skipped: number;
+  lists_imported: number;
+  list_movies_imported: number;
+  unmatched_films: UnmatchedFilm[];
+}
+
+export type ImportJobStatus = "pending" | "processing" | "completed" | "failed";
+
+export interface ImportJob {
+  id: number;
+  status: ImportJobStatus;
+  total_films: number | null;
+  processed_films: number;
+  summary: ImportSummary | null;
+  error_message: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface CurrentUser {
   email: string;
   display_name: string;

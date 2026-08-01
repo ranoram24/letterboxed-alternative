@@ -109,6 +109,48 @@ def claude_responses(monkeypatch):
 
 
 @pytest.fixture()
+def import_db(monkeypatch, db_session):
+    """The background import job opens its own DB session (it runs after the request's
+    session is closed) — point it at the same in-memory engine as db_session so tests
+    can see what the job wrote."""
+    test_session_local = sessionmaker(bind=db_session.get_bind())
+    monkeypatch.setattr("app.services.letterboxd_import.SessionLocal", test_session_local)
+
+
+@pytest.fixture()
+def mock_import_tmdb(monkeypatch):
+    """Stand in for TMDb title/year matching used by the Letterboxd import job."""
+
+    async def fake_find_best_match(title, year, settings=None):
+        tmdb_id = MOVIE_TITLE_TO_TMDB_ID.get(title.lower())
+        if tmdb_id is None:
+            return None
+        return MovieSearchResult(tmdb_id=tmdb_id, title=title, year=year, poster_url=None)
+
+    async def fake_get_or_cache_movie(db, tmdb_id, settings=None):
+        movie = db.scalar(select(Movie).where(Movie.tmdb_id == tmdb_id))
+        if movie is not None:
+            return movie
+        movie = Movie(tmdb_id=tmdb_id, title=f"Movie {tmdb_id}", year=2020)
+        db.add(movie)
+        db.flush()
+        return movie
+
+    monkeypatch.setattr("app.services.letterboxd_import.find_best_match", fake_find_best_match)
+    monkeypatch.setattr("app.services.letterboxd_import.get_or_cache_movie", fake_get_or_cache_movie)
+
+
+# Title (lowercase) -> tmdb_id used by mock_import_tmdb; "movie five" is deliberately
+# absent so tests can exercise the unmatched-film path.
+MOVIE_TITLE_TO_TMDB_ID = {
+    "movie one": 101,
+    "movie two": 102,
+    "movie three": 103,
+    "movie four": 104,
+}
+
+
+@pytest.fixture()
 def client(db_session, test_user, mock_tmdb):
     def override_get_db():
         yield db_session

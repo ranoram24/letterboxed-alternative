@@ -41,6 +41,47 @@ async def search_movies(query: str, settings: Settings | None = None) -> list[Mo
     ]
 
 
+async def find_best_match(title: str, year: int | None, settings: Settings | None = None) -> MovieSearchResult | None:
+    """Best-effort resolve a bare (title, year) pair — e.g. from a Letterboxd export row
+    with no TMDb id — to a single TMDb movie. Returns None rather than a low-confidence guess.
+    """
+    settings = settings or get_settings()
+
+    async with httpx.AsyncClient(base_url=settings.tmdb_api_base_url) as client:
+        params = {"api_key": settings.tmdb_api_key, "query": title}
+        if year is not None:
+            params["primary_release_year"] = year
+        response = await client.get("/search/movie", params=params)
+        response.raise_for_status()
+        results = response.json().get("results", [])
+
+        if not results and year is not None:
+            # Letterboxd's year can be off by one from TMDb's primary release year
+            # (festival vs. wide release, region differences) — retry unfiltered and
+            # accept the top hit only if its year is close enough to still be confident.
+            response = await client.get(
+                "/search/movie", params={"api_key": settings.tmdb_api_key, "query": title}
+            )
+            response.raise_for_status()
+            results = response.json().get("results", [])
+            if results:
+                top = results[0]
+                top_year = int(top["release_date"][:4]) if top.get("release_date") else None
+                if top_year is None or abs(top_year - year) > 1:
+                    return None
+
+    if not results:
+        return None
+
+    top = results[0]
+    return MovieSearchResult(
+        tmdb_id=top["id"],
+        title=top["title"],
+        year=int(top["release_date"][:4]) if top.get("release_date") else None,
+        poster_url=_poster_url(top.get("poster_path")),
+    )
+
+
 async def _fetch_movie_list(
     tmdb_path: str, settings: Settings, pages: tuple[int, ...] = (1, 2)
 ) -> list[MovieSearchResult]:
