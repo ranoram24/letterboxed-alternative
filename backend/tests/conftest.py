@@ -109,6 +109,53 @@ def claude_responses(monkeypatch):
 
 
 @pytest.fixture()
+def mock_discover(monkeypatch):
+    """Stand in for TMDb's /discover/movie call used by AI recommendations."""
+
+    async def fake_discover_movies_by_genre(genre_ids, exclude_tmdb_ids, settings=None, pages=(1, 2, 3)):
+        candidates = [
+            {
+                "movie_id": 501,
+                "title": "Discover Movie 1",
+                "year": 2022,
+                "genres": ["Drama"],
+                "overview": "A discovered movie.",
+                "popularity": 50.0,
+                "vote_average": 7.5,
+                "poster_url": "https://image.tmdb.org/t/p/w500/501.jpg",
+            },
+            {
+                "movie_id": 502,
+                "title": "Discover Movie 2",
+                "year": 2023,
+                "genres": ["Drama"],
+                "overview": "Another discovered movie.",
+                "popularity": 40.0,
+                "vote_average": 7.0,
+                "poster_url": "https://image.tmdb.org/t/p/w500/502.jpg",
+            },
+        ]
+        return [candidate for candidate in candidates if candidate["movie_id"] not in exclude_tmdb_ids]
+
+    monkeypatch.setattr("app.services.recommendations.discover_movies_by_genre", fake_discover_movies_by_genre)
+
+
+@pytest.fixture()
+def recommendation_responses(monkeypatch):
+    """Queue of RecommendationsLLM|None to return from successive _call_claude calls, so
+    tests don't need a real Anthropic API key or network access."""
+    from app.services import recommendations as recommendations_module
+
+    responses: list = []
+
+    def fake_call_claude(system_prompt):
+        return responses.pop(0) if responses else None
+
+    monkeypatch.setattr(recommendations_module, "_call_claude", fake_call_claude)
+    return responses
+
+
+@pytest.fixture()
 def import_db(monkeypatch, db_session):
     """The background import job opens its own DB session (it runs after the request's
     session is closed) — point it at the same in-memory engine as db_session so tests

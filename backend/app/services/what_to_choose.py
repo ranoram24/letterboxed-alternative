@@ -78,7 +78,7 @@ def _genre_distribution(candidates: list[dict]) -> dict[str, int]:
     return dict(sorted(counts.items(), key=lambda pair: pair[1], reverse=True))
 
 
-def _taste_summary(db: Session, user_email: str) -> dict:
+def compute_taste_summary(db: Session, user_email: str) -> dict:
     """Top-rated genres/directors + average rating per genre, derived from diary_entries.
 
     Computed here in Python rather than left for the model to tally from raw rows.
@@ -168,7 +168,7 @@ def choose_movie(db: Session, user: User, request: WhatToChooseRequest) -> tuple
     candidates_by_id = {candidate["movie_id"]: candidate for candidate in candidates}
 
     genre_distribution = _genre_distribution(candidates)
-    taste_summary = _taste_summary(db, user.email)
+    taste_summary = compute_taste_summary(db, user.email)
     time_label = _time_of_day_label(request.local_datetime)
     system_prompt = _build_system_prompt(candidates, genre_distribution, taste_summary, time_label)
 

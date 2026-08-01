@@ -5,10 +5,13 @@ export default function PosterRow({
   title,
   movies,
   badge,
+  reasons,
 }: {
   title: string;
   movies: MovieSearchResult[];
   badge?: (movie: MovieSearchResult) => string | null;
+  /** Optional per-movie "why we recommended this" text, carried to the detail page via the link. */
+  reasons?: Map<number, string>;
 }) {
   if (movies.length === 0) return null;
 
@@ -16,10 +19,15 @@ export default function PosterRow({
     <section>
       <h2 className="mb-3 text-lg font-semibold text-white">{title}</h2>
       <div className="no-scrollbar flex gap-3 overflow-x-auto pb-2">
-        {movies.map((movie) => (
+        {movies.map((movie) => {
+          const reason = reasons?.get(movie.tmdb_id);
+          const href = reason
+            ? `/movie/${movie.tmdb_id}?reason=${encodeURIComponent(reason)}`
+            : `/movie/${movie.tmdb_id}`;
+          return (
           <Link
             key={movie.tmdb_id}
-            href={`/movie/${movie.tmdb_id}`}
+            href={href}
             className="group w-28 flex-none overflow-hidden rounded-lg shadow-lg transition-transform duration-200 hover:scale-105 sm:w-32"
           >
             <div className="relative">
@@ -38,7 +46,8 @@ export default function PosterRow({
               )}
             </div>
           </Link>
-        ))}
+          );
+        })}
       </div>
     </section>
   );

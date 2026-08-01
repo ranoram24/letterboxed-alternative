@@ -8,6 +8,8 @@ from app.models.diary_entry import DiaryEntry
 from app.models.movie import Movie
 from app.models.user import User
 from app.schemas.movie import MovieOut, MovieReviewOut, MovieSearchResult
+from app.schemas.recommendation import RecommendedMovieOut
+from app.services.recommendations import get_recommendations_cached
 from app.services.tmdb_client import (
     get_now_playing_movies,
     get_or_cache_movie,
@@ -33,6 +35,14 @@ async def popular():
 async def now_playing():
     """Public/unauthenticated, same reasoning as /popular."""
     return await get_now_playing_movies()
+
+
+@router.get("/recommendations", response_model=list[RecommendedMovieOut])
+async def recommendations(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    """AI-personalized picks — returns [] until the user has rated diary entries to base
+    taste on; the frontend hides the whole "Recommended for You" row in that case.
+    Cached per-user for 24h — see get_recommendations_cached."""
+    return await get_recommendations_cached(db, current_user)
 
 
 @router.get("/{tmdb_id}", response_model=MovieOut)

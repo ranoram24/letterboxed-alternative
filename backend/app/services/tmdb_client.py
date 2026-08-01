@@ -11,6 +11,30 @@ from app.schemas.movie import MovieSearchResult
 TMDB_POSTER_BASE = "https://image.tmdb.org/t/p/w500"
 TMDB_BACKDROP_BASE = "https://image.tmdb.org/t/p/w1280"
 
+# TMDb's official movie genre list (id <-> name) — stable/published, not worth a live lookup.
+GENRE_NAME_TO_ID = {
+    "Action": 28,
+    "Adventure": 12,
+    "Animation": 16,
+    "Comedy": 35,
+    "Crime": 80,
+    "Documentary": 99,
+    "Drama": 18,
+    "Family": 10751,
+    "Fantasy": 14,
+    "History": 36,
+    "Horror": 27,
+    "Music": 10402,
+    "Mystery": 9648,
+    "Romance": 10749,
+    "Science Fiction": 878,
+    "TV Movie": 10770,
+    "Thriller": 53,
+    "War": 10752,
+    "Western": 37,
+}
+GENRE_ID_TO_NAME = {value: key for key, value in GENRE_NAME_TO_ID.items()}
+
 
 def _poster_url(poster_path: str | None) -> str | None:
     return f"{TMDB_POSTER_BASE}{poster_path}" if poster_path else None
@@ -127,6 +151,65 @@ async def get_popular_movies(settings: Settings | None = None) -> list[MovieSear
 
 async def get_now_playing_movies(settings: Settings | None = None) -> list[MovieSearchResult]:
     return await _fetch_movie_list("/movie/now_playing", settings or get_settings())
+
+
+async def discover_movies_by_genre(
+    genre_ids: list[int],
+    exclude_tmdb_ids: set[int],
+    settings: Settings | None = None,
+    pages: tuple[int, ...] = (1,),
+) -> list[dict]:
+    """Candidate pool for AI recommendations — TMDb movies matching any of the given
+    genres (OR'd), sorted by popularity, with metadata Claude needs to rank them.
+
+    Unlike get_or_cache_movie, this doesn't write to our local Movie table — most
+    candidates are never shown, so caching them all would be wasted writes.
+    """
+    settings = settings or get_settings()
+    async with httpx.AsyncClient(base_url=settings.tmdb_api_base_url) as client:
+        responses = await asyncio.gather(
+            *[
+                client.get(
+                    "/discover/movie",
+                    params={
+                        "api_key": settings.tmdb_api_key,
+                        "with_genres": "|".join(str(gid) for gid in genre_ids),
+                        "sort_by": "popularity.desc",
+                        "vote_count.gte": 100,
+                        "page": page,
+                    },
+                )
+                for page in pages
+            ]
+        )
+
+    candidates: list[dict] = []
+    seen_tmdb_ids: set[int] = set(exclude_tmdb_ids)
+    for response in responses:
+        response.raise_for_status()
+        for result in response.json().get("results", []):
+            poster_url = _poster_url(result.get("poster_path"))
+            if poster_url is None or result["id"] in seen_tmdb_ids:
+                continue
+            seen_tmdb_ids.add(result["id"])
+            candidates.append(
+                {
+                    "movie_id": result["id"],
+                    "title": result["title"],
+                    "year": int(result["release_date"][:4]) if result.get("release_date") else None,
+                    "genres": [
+                        GENRE_ID_TO_NAME[gid] for gid in result.get("genre_ids", []) if gid in GENRE_ID_TO_NAME
+                    ],
+                    # Trimmed to keep the recommendation prompt (and Claude's latency) down —
+                    # a sentence or two is plenty for ranking, we don't need the full synopsis.
+                    "overview": (result.get("overview") or "")[:200] or None,
+                    "popularity": result.get("popularity"),
+                    "vote_average": result.get("vote_average"),
+                    "poster_url": poster_url,
+                }
+            )
+
+    return candidates
 
 
 async def _fetch_movie_detail(tmdb_id: int, settings: Settings) -> dict:

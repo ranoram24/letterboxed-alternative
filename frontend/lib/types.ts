@@ -76,6 +76,11 @@ export interface WhatToChooseResult {
   reason: string;
 }
 
+export interface RecommendedMovie {
+  movie: MovieSearchResult;
+  reason: string;
+}
+
 export interface UnmatchedFilm {
   title: string;
   year: number | null;

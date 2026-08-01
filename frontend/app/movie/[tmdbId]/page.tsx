@@ -1,7 +1,7 @@
 "use client";
 
 import { use, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import AddLogModal from "@/components/AddLogModal";
 import { apiDelete, apiGet, apiPost } from "@/lib/api";
 import type { Movie, MovieReview, MovieSearchResult, WatchlistItem } from "@/lib/types";
@@ -15,6 +15,7 @@ export default function MovieDetailPage({
   const { tmdbId } = use(params);
   const { user, loading } = useCurrentUser();
   const router = useRouter();
+  const recommendedReason = useSearchParams().get("reason");
 
   const [movie, setMovie] = useState<Movie | null>(null);
   const [reviews, setReviews] = useState<MovieReview[] | null>(null);
@@ -124,6 +125,15 @@ export default function MovieDetailPage({
               {movie.directors.length > 0 && <> · Directed by {movie.directors.join(", ")}</>}
               {movie.runtime && <> · {movie.runtime} min</>}
             </p>
+
+            {recommendedReason && (
+              <div className="mt-4 rounded-xl border border-amber-400/20 bg-amber-400/5 p-3">
+                <p className="text-xs font-semibold tracking-wide text-amber-400 uppercase">
+                  Why we recommended this
+                </p>
+                <p className="mt-1 text-sm text-zinc-200">{recommendedReason}</p>
+              </div>
+            )}
 
             {movie.tagline && <p className="mt-4 text-sm tracking-wide text-zinc-400 uppercase">{movie.tagline}</p>}
 
