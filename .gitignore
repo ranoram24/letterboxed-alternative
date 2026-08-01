@@ -1,0 +1,46 @@
+# Planning reference — never commit
+movie-explorer-architecture.md
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+build/
+next-env.d.ts
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Python / FastAPI
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# SQLite databases
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Env files (do NOT ignore *.env.example)
+.env
+.env.local
+.env.*.local
+backend/.env
+frontend/.env.local
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
